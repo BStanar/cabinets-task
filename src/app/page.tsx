@@ -1,12 +1,12 @@
+"use client";
+import Scene from "@/components/Scene/scene-canvas";
 import { loadAllModels } from "@/lib/firestoreService";
 
-export default async function Home() {
-  const  models  =  await loadAllModels();
+export default  function Home() {
 
   return (
-    <>
-    {JSON.stringify(models)}
-    </>
+    <main>
+      <Scene />
+    </main>
   );
 }
-
