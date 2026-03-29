@@ -43,10 +43,12 @@ export default function Scene() {
 
         <Model
           path="/models/double-door-base-cabinet.glb"
+          modelId="model1"
           transform={modelsState.model1}
         />
         <Model
           path="/models/sink-kitchen-cabinet.glb"
+          modelId="model2"
           transform={modelsState.model2}
         />
         <Stats />
