@@ -15,11 +15,11 @@ const COLLECTION = 'Models';
 
 const DEFAULT_STATE: ModelsState = {
   model1: {
-    position: { x: -4, y: -4, z: -4 },
+    position: { x: 4, y: 0, z: 0 },
     rotation: { x: 0, y: 0, z: 0 },
   },
   model2: {
-    position: { x: 4, y: 4, z: 4 },
+    position: { x: -4, y: 0, z: 4 },
     rotation: { x: 0, y: 0, z: 0 },
   },
 };

@@ -1,6 +1,5 @@
 "use client";
 import { Canvas } from "@react-three/fiber";
-import OrbitControls from "../orbit-controls";
 import Model from "./models";
 import {
   DEFAULT_STATE,
@@ -8,6 +7,7 @@ import {
   ModelsState,
 } from "@/lib/firestoreService";
 import { useEffect, useState } from "react";
+import { OrbitControls, Stats } from "@react-three/drei";
 
 export default function Scene() {
   const [modelsState, setModelsState] = useState<ModelsState>(DEFAULT_STATE);
@@ -29,23 +29,34 @@ export default function Scene() {
         style={{ background: "#0d0d0f" }}
       >
         <ambientLight intensity={0.75} />
-        <directionalLight position={[10, 10, 5]} intensity={1} />
+        <directionalLight position={[10, 10, 5]} intensity={5} />
 
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
           <planeGeometry args={[20, 20]} />
-          <meshStandardMaterial color="#1a1a1a" />
+          <meshStandardMaterial color="#ffdfff" />
         </mesh>
+
+        <gridHelper
+          args={[20, 20, "#ccaacc", "#ccaacc"]}
+          position={[0, 0, 0]}
+        />
 
         <Model
           path="/models/double-door-base-cabinet.glb"
+          modelId="model1"
           transform={modelsState.model1}
         />
         <Model
           path="/models/sink-kitchen-cabinet.glb"
+          modelId="model2"
           transform={modelsState.model2}
         />
-
-        <OrbitControls />
+        <Stats />
+        <OrbitControls
+          makeDefault
+          minPolarAngle={0}
+          maxPolarAngle={Math.PI / 2}
+        />
       </Canvas>
     </div>
   );
