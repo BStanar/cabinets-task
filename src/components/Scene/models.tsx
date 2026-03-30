@@ -14,6 +14,8 @@ interface ModelProps {
   transform: ModelTransform;
   boundingBoxRegistry: BoundingBoxRegistry;
   draggingRef: DraggingRef;
+  isSelected: boolean;
+  onSelect: () => void;
 }
 
 const FLOOR_PLANE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -24,6 +26,8 @@ export default function Model({
   transform,
   boundingBoxRegistry,
   draggingRef,
+  isSelected,
+  onSelect,
 }: ModelProps) {
   const gltf = useLoader(GLTFLoader, path);
   const groupRef = useRef<THREE.Group>(null);
@@ -43,18 +47,65 @@ export default function Model({
     return -box.min.y;
   }, [cloned]);
 
-  const resolveCollisions = useCollisionResolver(modelId, groupRef, boundingBoxRegistry);
+  const resolveCollisions = useCollisionResolver(
+    modelId,
+    groupRef,
+    boundingBoxRegistry,
+  );
+
+  // Compute the local-space bounding box with yOffset applied — used for
+  // both the selection wireframe and the initial collision registration.
+  const localBox = useMemo(() => {
+    cloned.position.set(0, yOffset, 0);
+    cloned.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(cloned);
+    cloned.position.set(0, 0, 0);
+    return box;
+  }, [cloned, yOffset]);
+
+  const localSize = useMemo(
+    () => new THREE.Vector3().copy(localBox.getSize(new THREE.Vector3())),
+    [localBox],
+  );
+  const localCenter = useMemo(
+    () => new THREE.Vector3().copy(localBox.getCenter(new THREE.Vector3())),
+    [localBox],
+  );
 
   // Register this model's bounding box on mount
   useEffect(() => {
     if (!groupRef.current) return;
-    boundingBoxRegistry.current[modelId] = new THREE.Box3().setFromObject(groupRef.current);
+    boundingBoxRegistry.current[modelId] = new THREE.Box3().setFromObject(
+      groupRef.current,
+    );
   }, [boundingBoxRegistry, modelId]);
+
+  // When rotation changes via the slider: apply it to the Three.js object,
+  // re-register the BB (rotation changes its shape), then push out of any overlap.
+  useEffect(() => {
+    if (!groupRef.current) return;
+    groupRef.current.rotation.set(
+      transform.rotation.x,
+      transform.rotation.y,
+      transform.rotation.z,
+    );
+    boundingBoxRegistry.current[modelId] = new THREE.Box3().setFromObject(
+      groupRef.current,
+    );
+    resolveCollisions();
+  }, [
+    transform.rotation.x,
+    transform.rotation.y,
+    transform.rotation.z,
+    boundingBoxRegistry,
+    modelId,
+  ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
     if (!groupRef.current) return;
 
+    onSelect();
     isThisModelDragging.current = true;
     // Signal to CameraRig that a drag is in progress so OrbitControls is disabled.
     draggingRef.current = true;
@@ -70,7 +121,7 @@ export default function Model({
     dragOffset.current.set(
       groupRef.current.position.x - floorPoint.current.x,
       0,
-      groupRef.current.position.z - floorPoint.current.z
+      groupRef.current.position.z - floorPoint.current.z,
     );
   };
 
@@ -111,13 +162,39 @@ export default function Model({
   return (
     <group
       ref={groupRef}
-      position={[transform.position.x, transform.position.y, transform.position.z]}
-      rotation={[transform.rotation.x, transform.rotation.y, transform.rotation.z]}
+      position={[
+        transform.position.x,
+        transform.position.y,
+        transform.position.z,
+      ]}
+      rotation={[
+        transform.rotation.x,
+        transform.rotation.y,
+        transform.rotation.z,
+      ]}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
     >
       <primitive object={cloned} position={[0, yOffset, 0]} />
+      {isSelected && <SelectionBox size={localSize} center={localCenter} />}
     </group>
+  );
+}
+
+// Wireframe box rendered around the selected model.
+// size and center are computed in group-local space so the box aligns with the mesh.
+function SelectionBox({
+  size,
+  center,
+}: {
+  size: THREE.Vector3;
+  center: THREE.Vector3;
+}) {
+  return (
+    <mesh position={[center.x, center.y, center.z]}>
+      <boxGeometry args={[size.x, size.y, size.z]} />
+      <meshBasicMaterial color="#60a5fa" wireframe />
+    </mesh>
   );
 }
