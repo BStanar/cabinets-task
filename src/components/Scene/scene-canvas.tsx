@@ -48,7 +48,8 @@ export default function Scene() {
       <Canvas
         shadows
         camera={{ position: [0, 6, 10], fov: 50 }}
-        style={{ background: "#0d0d0f" }}
+        style={{ background: "#0d0d0f" }}  
+        onPointerMissed={() => setSelectedModel(null)}
       >
         <ambientLight intensity={0.75} />
         <directionalLight position={[10, 10, 5]} intensity={5} />
