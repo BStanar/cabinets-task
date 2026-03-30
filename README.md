@@ -1,6 +1,7 @@
 # 3D Kitchen Cabinet Configurator
 
 An interactive 3D web application for positioning and configuring kitchen cabinet models in real time.
+Live preview: https://cabinets-task.vercel.app/
 
 ## Features
 
