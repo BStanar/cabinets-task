@@ -4,6 +4,7 @@ import { useState } from "react";
 import Model from "./models";
 import { useCameraRig } from "@/hooks/use-camera-rotation";
 import { useSceneData } from "@/hooks/use-scene-data";
+import RotationPanel from "./rotation-panel";
 
 // useCameraRig calls useFrame internally, which must run inside <Canvas>.
 // This thin wrapper component lets us call the hook from within the R3F tree.
@@ -22,8 +23,11 @@ export default function Scene() {
   const {
     modelsState,
     loaded,
+    selectedModel,
+    setSelectedModel,
     boundingBoxRegistry,
     draggingRef,
+    handleRotationChange,
   } = useSceneData();
 
   // Controls which camera is active — perspective (3D) or orthographic (2D top-down).
@@ -55,7 +59,10 @@ export default function Scene() {
           <meshStandardMaterial color="#ffdfff" />
         </mesh>
 
-        <gridHelper args={[20, 20, "#ccaacc", "#ccaacc"]} position={[0, 0, 0]} />
+        <gridHelper
+          args={[20, 20, "#ccaacc", "#ccaacc"]}
+          position={[0, 0, 0]}
+        />
 
         <Model
           path="/models/double-door-base-cabinet.glb"
@@ -63,6 +70,8 @@ export default function Scene() {
           transform={modelsState.model1}
           boundingBoxRegistry={boundingBoxRegistry}
           draggingRef={draggingRef}
+          isSelected={selectedModel === "model1"}
+          onSelect={() => setSelectedModel("model1")}
         />
         <Model
           path="/models/sink-kitchen-cabinet.glb"
@@ -70,10 +79,17 @@ export default function Scene() {
           transform={modelsState.model2}
           boundingBoxRegistry={boundingBoxRegistry}
           draggingRef={draggingRef}
+          isSelected={selectedModel === "model2"}
+          onSelect={() => setSelectedModel("model2")}
         />
-        
         <CameraRig isTopDown={isTopDown} draggingRef={draggingRef} />
       </Canvas>
+      <RotationPanel
+        modelId={selectedModel}
+        modelsState={modelsState}
+        onRotationChange={handleRotationChange}
+        onClose={() => setSelectedModel(null)}
+      />
     </div>
   );
 }
